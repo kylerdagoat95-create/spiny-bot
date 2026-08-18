@@ -1,0 +1,202 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local spinning = false
+local floating = false
+local spinSpeed = 1
+local floatHeight = 5
+local spinConnection = nil
+local floatConnection = nil
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SpinBot"
+screenGui.Parent = player.PlayerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 200, 0, 250)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+titleBar.BackgroundTransparency = 0
+titleBar.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -30, 1, 0)
+titleLabel.Position = UDim2.new(0, 5, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "SpinBot"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 14
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 1, 0)
+minimizeBtn.Position = UDim2.new(1, -30, 0, 0)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+minimizeBtn.Text = "_"
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.TextSize = 20
+minimizeBtn.Parent = titleBar
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -30)
+contentFrame.Position = UDim2.new(0, 0, 0, 30)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+local spinToggle = Instance.new("TextButton")
+spinToggle.Size = UDim2.new(0.8, 0, 0, 35)
+spinToggle.Position = UDim2.new(0.1, 0, 0.05, 0)
+spinToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+spinToggle.Text = "Spin: OFF"
+spinToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+spinToggle.Parent = contentFrame
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.8, 0, 0, 20)
+speedLabel.Position = UDim2.new(0.1, 0, 0.2, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: " .. spinSpeed
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.TextSize = 12
+speedLabel.Parent = contentFrame
+
+local speedSlider = Instance.new("TextBox")
+speedSlider.Size = UDim2.new(0.8, 0, 0, 25)
+speedSlider.Position = UDim2.new(0.1, 0, 0.3, 0)
+speedSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedSlider.Text = "1"
+speedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedSlider.Parent = contentFrame
+
+local floatToggle = Instance.new("TextButton")
+floatToggle.Size = UDim2.new(0.8, 0, 0, 35)
+floatToggle.Position = UDim2.new(0.1, 0, 0.4, 0)
+floatToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+floatToggle.Text = "Float: OFF"
+floatToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatToggle.Parent = contentFrame
+
+local heightLabel = Instance.new("TextLabel")
+heightLabel.Size = UDim2.new(0.8, 0, 0, 20)
+heightLabel.Position = UDim2.new(0.1, 0, 0.55, 0)
+heightLabel.BackgroundTransparency = 1
+heightLabel.Text = "Height: " .. floatHeight
+heightLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+heightLabel.TextSize = 12
+heightLabel.Parent = contentFrame
+
+local heightSlider = Instance.new("TextBox")
+heightSlider.Size = UDim2.new(0.8, 0, 0, 25)
+heightSlider.Position = UDim2.new(0.1, 0, 0.65, 0)
+heightSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+heightSlider.Text = "5"
+heightSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+heightSlider.Parent = contentFrame
+
+local minimized = false
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        contentFrame.Visible = false
+        mainFrame.Size = UDim2.new(0, 200, 0, 30)
+    else
+        contentFrame.Visible = true
+        mainFrame.Size = UDim2.new(0, 200, 0, 250)
+    end
+end)
+
+local function toggleSpin()
+    spinning = not spinning
+    spinToggle.Text = spinning and "Spin: ON" or "Spin: OFF"
+    spinToggle.BackgroundColor3 = spinning and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    
+    if spinning then
+        spinConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if rootPart and rootPart.Parent then
+                rootPart.CFrame = CFrame.new(rootPart.Position) * CFrame.Angles(0, math.rad(spinSpeed), 0)
+            end
+        end)
+    else
+        if spinConnection then
+            spinConnection:Disconnect()
+            spinConnection = nil
+        end
+    end
+end
+
+spinToggle.MouseButton1Click:Connect(toggleSpin)
+
+speedSlider.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local newSpeed = tonumber(speedSlider.Text)
+        if newSpeed and newSpeed >= 0 and newSpeed <= 50 then
+            spinSpeed = newSpeed
+            speedLabel.Text = "Speed: " .. spinSpeed
+        else
+            speedSlider.Text = tostring(spinSpeed)
+        end
+    end
+end)
+
+local function toggleFloat()
+    floating = not floating
+    floatToggle.Text = floating and "Float: ON" or "Float: OFF"
+    floatToggle.BackgroundColor3 = floating and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    
+    if floating then
+        floatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if rootPart and rootPart.Parent then
+                local currentPos = rootPart.Position
+                rootPart.Position = Vector3.new(currentPos.X, floatHeight, currentPos.Z)
+            end
+        end)
+    else
+        if floatConnection then
+            floatConnection:Disconnect()
+            floatConnection = nil
+        end
+    end
+end
+
+floatToggle.MouseButton1Click:Connect(toggleFloat)
+
+heightSlider.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local newHeight = tonumber(heightSlider.Text)
+        if newHeight and newHeight >= 0 and newHeight <= 50 then
+            floatHeight = newHeight
+            heightLabel.Text = "Height: " .. floatHeight
+        else
+            heightSlider.Text = tostring(floatHeight)
+        end
+    end
+end)
+
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    rootPart = character:WaitForChild("HumanoidRootPart")
+    
+    if spinning then
+        toggleSpin()
+    end
+    if floating then
+        toggleFloat()
+    end
+end)
+
+game:GetService("Players").LocalPlayer:WaitForChild("CharacterRemoving"):Connect(function()
+    if spinConnection then spinConnection:Disconnect() end
+    if floatConnection then floatConnection:Disconnect() end
+end)
